@@ -13,6 +13,7 @@ let checkboxes = {};
 let bassTrack = [];
 let bassSubdivision = 5;
 let bassStep = 0; 
+let playBass = true;
 
 let isDrawingBass = false;
 let bassOscillator;
@@ -113,14 +114,25 @@ function createUI() {
   Object.keys(presets).forEach(preset => presetSelect.option(preset));
   presetSelect.changed(changePreset);
   presetSelect.parent(left);
+  
+  
+      // playBass checkbox
+  checkboxes.playBass = createCheckbox('Bass', true);
+  checkboxes.playBass.class('checkbox');
+  checkboxes.playBass.changed(() => {
+    playBass = checkboxes.playBass.checked();
+  });
+  checkboxes.playBass.parent(left);
+  
 
  // Add oscillator type radio buttons
-  let oscillatorTypeLabel = createP('Osc:').parent(left);
+  //let oscillatorTypeLabel = createP('Osc:').parent(left);
   let oscillatorTypeRadio = createRadio();
+  oscillatorTypeRadio.class('radio');
   //oscillatorTypeRadio.option('sine');
-  oscillatorTypeRadio.option('square', 'square');
+  oscillatorTypeRadio.option('square', 'Square');
   //oscillatorTypeRadio.option('triangle');
-  oscillatorTypeRadio.option('sawtooth', 'saw');
+  oscillatorTypeRadio.option('sawtooth', 'Saw');
   oscillatorTypeRadio.selected('square'); // Default selection
   oscillatorTypeRadio.changed(() => {
     let selectedType = oscillatorTypeRadio.value();
@@ -132,6 +144,9 @@ function createUI() {
 
   wobbleSpeedSlider = createSlider(1, 10, wobbleSpeed,1); // Range: 0.1 Hz to 10 Hz
   wobbleSpeedSlider.parent(left);
+  
+
+
 
 }
 
@@ -144,7 +159,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight - uiHeight);
   cellSize = width / gridSize;
   bassTrackHeight = (height / 5) * 2;
-  bassTrack = Array(gridSize * bassSubdivision).fill(height - bassTrackHeight / 4);
+  bassTrack = Array(gridSize * bassSubdivision).fill(height - bassTrackHeight / 8);
 
   updateFrameRate();
 
@@ -187,7 +202,8 @@ let delay = new p5.Delay();
 
 function draw() {
   background(220);
-  noStroke();
+  stroke(0);
+  strokeWeight(0.5);
 
     //wobbleSpeed = wobbleSpeedSlider.value();
 
@@ -234,10 +250,10 @@ let wobble = sin(wobblePhase) * 300 + 500;
 
 
   // Update bassline
-  if (isPlaying) {
+  if (isPlaying && playBass === true) {
     let currentBassIndex = (currentStep * bassSubdivision) % bassTrack.length;
     let y = bassTrack[currentBassIndex];
-    let frequency = map(y, height, height - bassTrackHeight, 30, 60);
+    let frequency = map(y, height, height - bassTrackHeight, 30, 100);
     bassOscillator.freq(frequency);
     bassOscillator.amp(0.2);
   } else {
@@ -384,4 +400,3 @@ function updateBassTrack(x, y) {
   index = constrain(index, 0, bassTrack.length - 1);
   bassTrack[index] = constrain(y, height - bassTrackHeight, height);
 }
-
