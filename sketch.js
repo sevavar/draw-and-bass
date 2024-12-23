@@ -12,10 +12,14 @@ let checkboxes = {};
 
 let bassTrack = [];
 let bassSubdivision = 5;
+let bassStep = 0; 
+
 let isDrawingBass = false;
 let bassOscillator;
 let bassTrackHeight;
 let delay;
+let wobbleSpeedSlider, wobbleSpeed = 2; 
+let wobblePhase = 20;
 
 let gridSize = 16;
 let cellSize;
@@ -110,6 +114,25 @@ function createUI() {
   presetSelect.changed(changePreset);
   presetSelect.parent(left);
 
+ // Add oscillator type radio buttons
+  let oscillatorTypeLabel = createP('Osc:').parent(left);
+  let oscillatorTypeRadio = createRadio();
+  //oscillatorTypeRadio.option('sine');
+  oscillatorTypeRadio.option('square', 'square');
+  //oscillatorTypeRadio.option('triangle');
+  oscillatorTypeRadio.option('sawtooth', 'saw');
+  oscillatorTypeRadio.selected('square'); // Default selection
+  oscillatorTypeRadio.changed(() => {
+    let selectedType = oscillatorTypeRadio.value();
+    bassOscillator.setType(selectedType);
+  });
+  oscillatorTypeRadio.parent(left);
+
+
+
+  wobbleSpeedSlider = createSlider(1, 10, wobbleSpeed,1); // Range: 0.1 Hz to 10 Hz
+  wobbleSpeedSlider.parent(left);
+
 }
 
 function setup() {
@@ -136,31 +159,44 @@ function synthesize() {
   bassOscillator = new p5.Oscillator('square');
   bassOscillator.amp(0);
   bassOscillator.start();
+  //bassOscillator.freq(100); // Default frequency
+
+
 }
 
 function applyEffects() {
-  let gain = new p5.Gain();
-  sounds[2].connect(gain);
+  //let gain = new p5.Gain();
+  //sounds[2].connect(gain);
 
-  let bassFilter = new p5.Filter('lowpass');
-  bassFilter.freq(500);
-  bassFilter.res(5);
+  bassFilter = new p5.LowPass(); // LowPass filter for wobbling
 
-  bassDistortion = new p5.Distortion(0.05, '1x');
+bassDistortion = new p5.Distortion(0.05, '1x');
 
-  let delay = new p5.Delay();
-  delay.process(bassOscillator, 0.1, 0.7, 2300);
+let delay = new p5.Delay();
+ delay.process(bassOscillator, 0.1, 0.7, 2300);
 
   bassOscillator.disconnect();
   bassOscillator.connect(bassFilter);
   bassFilter.connect(bassDistortion);
   bassDistortion.connect(delay);
-  delay.connect();
+ delay.connect();
+
+
 }
+
 
 function draw() {
   background(220);
   noStroke();
+
+    //wobbleSpeed = wobbleSpeedSlider.value();
+
+let wobbleFrequency =   ((1 / (60/bpm))*wobbleSpeedSlider.value()); // Frequency in Hz
+  wobblePhase += TWO_PI * wobbleFrequency // Increment phase with time
+let wobble = sin(wobblePhase) * 300 + 500;
+
+  bassFilter.freq(wobble); // Apply wobbling to the filter frequency
+
 
 
   let trackHeight = height / 5;
@@ -195,11 +231,13 @@ function draw() {
   });
   endShape();
 
+
+
   // Update bassline
   if (isPlaying) {
     let currentBassIndex = (currentStep * bassSubdivision) % bassTrack.length;
     let y = bassTrack[currentBassIndex];
-    let frequency = map(y, height, height - bassTrackHeight, 20, 40);
+    let frequency = map(y, height, height - bassTrackHeight, 30, 60);
     bassOscillator.freq(frequency);
     bassOscillator.amp(0.2);
   } else {
@@ -219,6 +257,9 @@ function draw() {
     changePresetTo(nextPreset);
     presetChangePending = false;
   }
+  
+  
+
 }
 
 function togglePlay() {
@@ -343,3 +384,4 @@ function updateBassTrack(x, y) {
   index = constrain(index, 0, bassTrack.length - 1);
   bassTrack[index] = constrain(y, height - bassTrackHeight, height);
 }
+
