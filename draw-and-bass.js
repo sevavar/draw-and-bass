@@ -38,12 +38,20 @@ let presets = {
       [1, 11],
     ]
   },
-  "2 Step Shift": {
+  // "2 Step Shift": {
+  //   gridSize: 16,
+  //   pattern: [
+  //     [1, 3, 5, 7, 9, 11, 13, 15],
+  //     [5, 13],
+  //     [1, 8],
+  //   ]
+  // },
+  "Stepper": {
     gridSize: 16,
     pattern: [
       [1, 3, 5, 7, 9, 11, 13, 15],
-      [5, 13],
-      [1, 8],
+      [5, 11],
+      [1],
     ]
   },
   "Vessel Pattern": {
@@ -53,7 +61,32 @@ let presets = {
       [5,13,21,29], 
       [1,11,19,27],
     ]
-  }
+  },
+  
+  "Half Time": {
+    gridSize: 16,
+    pattern: [
+      [1, 3, 5, 7, 9, 11, 13, 15],
+      [9],
+      [1, 7],
+    ]
+  },
+  "Footwork": {
+    gridSize: 16,
+    pattern: [
+      [1, 3, 5, 7, 9, 11, 13, 15],
+      [5,13],
+      [1, 4, 7,9, 12,15],
+    ]
+  },
+  // "Old School Dubstep": {
+  //   gridSize: 16,
+  //   pattern: [
+  //     [2, 4, 6, 8, 10, 12, 14, 16],
+  //     [5,13],
+  //     [1, 4, 9, 12,14],
+  //   ]
+  // },
 };
 
 let sounds = [];
@@ -79,15 +112,9 @@ function preload() {
 
 function createUI() {
   let uiContainer = select('#ui-container');
- let left = createDiv().class('left').parent(uiContainer);
+  let left = createDiv().class('left').parent(uiContainer);
   let right = createDiv().class('right').parent(uiContainer);
   
-  
-  title = createP(`
-     <span class="label-left">Draw & Bass<sup>®</sup></span>
-  `);
-  title.class('label-container');
-  title.parent(right);
   
   
   playButton = createButton('');
@@ -135,8 +162,8 @@ function createUI() {
   oscillatorTypeRadio.option('sawtooth', 'Saw');
   oscillatorTypeRadio.selected('square'); // Default selection
   oscillatorTypeRadio.changed(() => {
-    let selectedType = oscillatorTypeRadio.value();
-    bassOscillator.setType(selectedType);
+  let selectedType = oscillatorTypeRadio.value();
+  bassOscillator.setType(selectedType);
   });
   oscillatorTypeRadio.parent(left);
 
@@ -144,6 +171,14 @@ function createUI() {
 
   wobbleSpeedSlider = createSlider(1, 10, wobbleSpeed,1); // Range: 0.1 Hz to 10 Hz
   wobbleSpeedSlider.parent(left);
+  
+  
+  
+  title = createP(`
+     <span class="label-left">Draw & Bass<sup> ®</sup></span>
+  `);
+  title.class('label-container');
+  title.parent(right);
   
 
 
@@ -154,20 +189,24 @@ function setup() {
   uiContainer = select('#ui-container');
   createUI();
   const uiHeight = document.getElementById('ui-container').offsetHeight;
-
   frameRate(60);
+  
   createCanvas(windowWidth, windowHeight - uiHeight);
-  cellSize = width / gridSize;
-  bassTrackHeight = (height / 5) * 2;
-  bassTrack = Array(gridSize * bassSubdivision).fill(height - bassTrackHeight / 8);
+  
+  calculateGrid();
+
+  bassTrack = Array(gridSize * bassSubdivision).fill(height - 50);
 
   updateFrameRate();
-
-
 
   resetToggledCells();
   synthesize();
   applyEffects();
+}
+
+function calculateGrid(){
+  cellSize = width / gridSize;
+  bassTrackHeight = (height / 5) * 2;
 }
 
 function synthesize() {
@@ -185,16 +224,16 @@ function applyEffects() {
 
   bassFilter = new p5.LowPass(); // LowPass filter for wobbling
 
-bassDistortion = new p5.Distortion(0.05, '1x');
+  bassDistortion = new p5.Distortion(0.05, '1x');
 
-let delay = new p5.Delay();
- delay.process(bassOscillator, 0.1, 0.7, 2300);
+  let delay = new p5.Delay();
+  delay.process(bassOscillator, 0.1, 0.7, 2300);
 
   bassOscillator.disconnect();
   bassOscillator.connect(bassFilter);
   bassFilter.connect(bassDistortion);
   bassDistortion.connect(delay);
- delay.connect();
+  delay.connect();
 
 
 }
@@ -203,9 +242,9 @@ let delay = new p5.Delay();
 function draw() {
   background(220);
   stroke(0);
-  strokeWeight(0.5);
+  strokeWeight(0);
 
-    //wobbleSpeed = wobbleSpeedSlider.value();
+
 
 let wobbleFrequency =   ((1 / (60/bpm))*wobbleSpeedSlider.value()); // Frequency in Hz
   wobblePhase += TWO_PI * wobbleFrequency // Increment phase with time
@@ -307,7 +346,7 @@ function updateStepCount() {
   cellSize = width / gridSize;
 
   // Bass track extension
-  let newBassTrack = Array(gridSize * bassSubdivision).fill(height - bassTrackHeight / 4);
+  let newBassTrack = Array(gridSize * bassSubdivision).fill(height - 100);
   bassTrack.forEach((val, i) => { newBassTrack[i] = val; });
   bassTrack = newBassTrack;
 
@@ -388,11 +427,11 @@ function changePresetTo(presetName) {
 }
 
 function playIcon() {
-  return `<svg width="20" height="20" viewBox="0 0 20 20"><polygon points="6,4 18,12 6,20" fill="white" /></svg>`;
+  return `<svg width="30" height="30" viewBox="0 0 20 20"><polygon points="4,0 20,10 4,20" fill="white" /></svg>`;
 }
 
 function stopIcon() {
-  return `<svg width="20" height="20" viewBox="0 0 20 20"><rect x="6" y="6" width="12" height="12" fill="white" /></svg>`;
+  return `<svg width="30" height="30" viewBox="0 0 20 20"><rect x="4" y="2" width="16" height="16" fill="white" /></svg>`;
 }
 
 function updateBassTrack(x, y) {
@@ -400,3 +439,17 @@ function updateBassTrack(x, y) {
   index = constrain(index, 0, bassTrack.length - 1);
   bassTrack[index] = constrain(y, height - bassTrackHeight, height);
 }
+
+
+
+function windowResized() {
+  const uiHeight = document.getElementById('ui-container').offsetHeight;
+  resizeCanvas(windowWidth, windowHeight - uiHeight);
+  togglePlay();
+  calculateGrid();
+  togglePlay();
+}
+
+
+
+
